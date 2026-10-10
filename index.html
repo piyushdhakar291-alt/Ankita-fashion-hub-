@@ -1,0 +1,162 @@
+
+    <div class="cart-row"><span>Total</span><strong>₹<span id="total">0</span></strong></div>
+    <button onclick="openCheckout()">PROCEED TO CHECKOUT</button>
+    <p class="notice">Demo checkout only. No real payment is processed.</p>
+  </div>
+  <div id="checkout">
+    <h3>Checkout Details</h3>
+    <form onsubmit="placeOrder(event)">
+      <input id="customer" placeholder="Full Name" required>
+      <input id="phone" placeholder="Mobile Number" type="tel" pattern="[0-9]{10}" required>
+      <input id="email" placeholder="Email Address" type="email" required>
+      <textarea id="address" placeholder="Full Delivery Address" required></textarea>
+      <input id="pincode" placeholder="PIN Code" pattern="[0-9]{6}" required>
+      <select id="payment" required>
+        <option value="">Select Payment Method</option>
+        <option value="Demo COD">Cash on Delivery (Demo)</option>
+        <option value="Demo Online">Online Payment (Demo only)</option>
+      </select>
+      <button type="submit">PLACE DEMO ORDER</button>
+    </form>
+    <p class="notice">This is a demo. Do not enter real personal or payment information.</p>
+  </div>
+</section>
+
+<section class="section" style="text-align:center">
+  <h2>Our Promise</h2>
+  <p>Elegant styles • Thoughtful details • Fashion for every occasion</p>
+</section>
+
+<footer id="footer">
+  <div class="logo">ANKITA <span>FASHION HUB</span></div>
+  <p>Discover your style with our ethnic and contemporary collection.</p>
+  <p>Contact: Add your business email and phone here.</p>
+  <p>Shipping Policy | Return Policy | Privacy Policy | Terms & Conditions</p>
+  <p>© <span id="year"></span> Ankita Fashion Hub. All rights reserved.</p>
+</footer>
+
+<script>
+const products = [
+ {id:1,name:"Elegant Printed Kurti",category:"Kurtis",price:599,old:899,image:""},
+ {id:2,name:"Festive Designer Lehenga",category:"Lehengas",price:2499,old:3499,image:""},
+ {id:3,name:"Classic Ethnic Suit Set",category:"Suits",price:1299,old:1799,image:""},
+ {id:4,name:"Everyday Cotton Kurti",category:"Kurtis",price:499,old:699,image:""},
+ {id:5,name:"Premium Party Dress",category:"Dresses",price:1499,old:1999,image:""},
+ {id:6,name:"Embroidered Lehenga",category:"Lehengas",price:2999,old:3999,image:""},
+ {id:7,name:"Traditional Suit Set",category:"Suits",price:1599,old:2199,image:""},
+ {id:8,name:"Floral Summer Dress",category:"Dresses",price:899,old:1199,image:""}
+];
+
+let cart = [];
+let category = "All";
+
+function money(n){return Number(n).toLocaleString("en-IN")}
+
+function renderProducts(){
+ const q=document.getElementById("search").value.toLowerCase();
+ const sort=document.getElementById("sort").value;
+ let list=products.filter(p=>
+  (category==="All"||p.category===category)&&
+  p.name.toLowerCase().includes(q)
+ );
+ if(sort==="low")list.sort((a,b)=>a.price-b.price);
+ if(sort==="high")list.sort((a,b)=>b.price-a.price);
+
+ document.getElementById("products").innerHTML=list.length?list.map(p=>`
+  <article class="product">
+   <div class="product-image">
+    ${p.image?`<img src="${p.image}" alt="${p.name}">`:
+    `<div style="text-align:center;color:#806d53">YOUR PHOTO HERE<br><small>${p.category}</small></div>`}
+   </div>
+   <h3>${p.name}</h3>
+   <div class="price">₹${money(p.price)}
+    <span class="old">₹${money(p.old)}</span>
+   </div>
+   <button onclick="addToCart(${p.id})">ADD TO CART</button>
+  </article>`).join(""):`<p>No products found.</p>`;
+}
+
+function filterCategory(c){
+ category=c;
+ renderProducts();
+ document.getElementById("shop").scrollIntoView({behavior:"smooth"});
+}
+
+function addToCart(id){
+ const item=cart.find(x=>x.id===id);
+ if(item)item.qty++;
+ else cart.push({id,qty:1});
+ renderCart();
+}
+
+function changeQty(id,delta){
+ const item=cart.find(x=>x.id===id);
+ if(!item)return;
+ item.qty+=delta;
+ if(item.qty<=0)cart=cart.filter(x=>x.id!==id);
+ renderCart();
+}
+
+function renderCart(){
+ const count=cart.reduce((s,x)=>s+x.qty,0);
+ const total=cart.reduce((s,x)=>{
+  const p=products.find(p=>p.id===x.id);
+  return s+p.price*x.qty;
+ },0);
+ document.getElementById("count").textContent=count;
+ document.getElementById("total").textContent=money(total);
+
+ document.getElementById("cart-items").innerHTML=cart.length?
+ cart.map(x=>{
+  const p=products.find(p=>p.id===x.id);
+  return `<div class="cart-row">
+   <div><strong>${p.name}</strong><br>₹${money(p.price)} × ${x.qty}
+    <div style="margin-top:8px">
+     <button onclick="changeQty(${p.id},-1)">−</button>
+     <button onclick="changeQty(${p.id},1)">+</button>
+     <button onclick="changeQty(${p.id},-${x.qty})">Remove</button>
+    </div>
+   </div>
+   <strong>₹${money(p.price*x.qty)}</strong>
+  </div>`;
+ }).join(""):"Your cart is empty.";
+}
+
+function openCheckout(){
+ if(!cart.length){alert("Please add a product to your cart first.");return;}
+ document.getElementById("checkout").style.display="block";
+ document.getElementById("checkout").scrollIntoView({behavior:"smooth"});
+}
+
+function placeOrder(event){
+ event.preventDefault();
+ const payment=document.getElementById("payment").value;
+ const orderNo="AFH"+Date.now().toString().slice(-8);
+ const summary=cart.map(x=>{
+  const p=products.find(p=>p.id===x.id);
+  return `${p.name} x ${x.qty}`;
+ }).join("\n");
+ const total=cart.reduce((s,x)=>{
+  return s+products.find(p=>p.id===x.id).price*x.qty;
+ },0);
+
+ alert(
+  "DEMO ORDER CONFIRMATION\n\n"+
+  "Order ID: "+orderNo+"\n"+
+  "Items:\n"+summary+"\n\n"+
+  "Total: ₹"+money(total)+"\n"+
+  "Payment selection: "+payment+
+  "\n\nThis order has NOT been sent to a server. No payment was taken."
+ );
+ cart=[];
+ renderCart();
+ document.getElementById("checkout").style.display="none";
+ event.target.reset();
+}
+
+document.getElementById("year").textContent=new Date().getFullYear();
+renderProducts();
+renderCart();
+</script>
+</body>
+</html>
